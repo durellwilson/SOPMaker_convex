@@ -35,6 +35,9 @@ function StepMedia({
 }
 
 export function SOPEditor({ sopId }: { sopId: Id<"sops"> }) {
+  const handleExportPDF = () => {
+    PDFExportService.exportToPDF("sop-content", "SOP-Document");
+  };
   const steps = useQuery(api.sops.getSteps, { sopId }) ?? [];
   const addStep = useMutation(api.sops.addStep);
   const updateStep = useMutation(api.sops.updateStep);
