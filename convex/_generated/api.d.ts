@@ -16,6 +16,7 @@ import type {
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as router from "../router.js";
+import type * as sharing from "../sharing.js";
 import type * as sops from "../sops.js";
 
 /**
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
   router: typeof router;
+  sharing: typeof sharing;
   sops: typeof sops;
 }>;
 export declare const api: FilterApi<

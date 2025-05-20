@@ -45,21 +45,18 @@ export class PDFExportService {
   }
   
   /**
-   * Captures snapshots of video elements and replaces them with static images
+   * Captures snapshots of video and image elements and replaces them with static images
    */
   private static async captureMediaElements() {
+    // Handle video elements
     const videos = document.querySelectorAll("video");
-    
     for (const video of Array.from(videos)) {
       try {
-        // Create canvas from video frame
         const canvas = document.createElement("canvas");
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Replace video with canvas
         const parent = video.parentNode;
         if (parent) {
           parent.replaceChild(canvas, video);
@@ -67,6 +64,25 @@ export class PDFExportService {
         }
       } catch (error) {
         console.warn("Failed to capture video frame:", error);
+      }
+    }
+    // Handle image elements
+    const images = document.querySelectorAll("img");
+    for (const img of Array.from(images)) {
+      try {
+        if (!img.complete || img.naturalWidth === 0) continue;
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const parent = img.parentNode;
+        if (parent) {
+          parent.replaceChild(canvas, img);
+          canvas.className = img.className;
+        }
+      } catch (error) {
+        console.warn("Failed to capture image:", error);
       }
     }
   }

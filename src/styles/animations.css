@@ -1,0 +1,171 @@
+/* Enhanced animations for voice recognition states */
+
+@keyframes listening-pulse {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.02);
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* Audio feedback visual indicator with enhanced accessibility */
+@keyframes audio-feedback-ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+    transform: scale(0.95);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(79, 70, 229, 0);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+    transform: scale(0.95);
+  }
+}
+
+/* Haptic feedback visual indicator */
+@keyframes haptic-feedback {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+@keyframes processing-pulse {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.3);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.03);
+    box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0);
+  }
+}
+
+/* Confidence level animation */
+@keyframes confidence-pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes success-pulse {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+}
+
+/* Voice wave animation */
+@keyframes voice-wave {
+  0% {
+    height: 5px;
+    transform: translateY(0px);
+  }
+  25% {
+    height: 15px;
+    transform: translateY(-5px);
+  }
+  50% {
+    height: 10px;
+    transform: translateY(0px);
+  }
+  75% {
+    height: 15px;
+    transform: translateY(-5px);
+  }
+  100% {
+    height: 5px;
+    transform: translateY(0px);
+  }
+}
+
+/* Command highlight animation */
+@keyframes command-highlight {
+  0% {
+    background-color: rgba(79, 70, 229, 0.1);
+  }
+  50% {
+    background-color: rgba(79, 70, 229, 0.2);
+  }
+  100% {
+    background-color: rgba(79, 70, 229, 0.1);
+  }
+}
+
+/* Add these classes to your Tailwind config or use them directly */
+.animate-listening-pulse {
+  animation: listening-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-processing-pulse {
+  animation: processing-pulse 0.8s ease-in-out infinite;
+}
+
+.animate-success-pulse {
+  animation: success-pulse 0.5s ease-out;
+}
+
+.animate-voice-wave-1 {
+  animation: voice-wave 1.2s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.animate-voice-wave-2 {
+  animation: voice-wave 1.2s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.animate-voice-wave-3 {
+  animation: voice-wave 1.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.animate-voice-wave-4 {
+  animation: voice-wave 1.2s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+.animate-command-highlight {
+  animation: command-highlight 2s ease-in-out infinite;
+}
