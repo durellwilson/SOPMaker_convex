@@ -1,6 +1,5 @@
 import { SpringValue, animated, useSpring } from '@react-spring/web';
--import { GestureResponderEvent } from 'react-native';
-+import { GestureResponderEvent } from 'react';
+import React from 'react';
 
 type AnimationConfig = {
   tension: number;
@@ -26,13 +25,11 @@ export class AnimationService {
   }
 
   static handleGestureTransform(
--    event: GestureResponderEvent,
-+    event: React.PointerEvent<Element>,
+    event: React.PointerEvent<Element>,
     currentTransform: SpringValue<number>,
     baseValue: number
-  ) {
--    const { pageX } = event.nativeEvent;
-+    const { pageX } = event;
+  ): void {
+    const { pageX } = event;
     const delta = pageX - baseValue;
     currentTransform.set(delta);
   }
@@ -40,7 +37,7 @@ export class AnimationService {
   static createAccessibleAnimation(values: object, config?: AnimationConfig) {
     return this.createSpring({
       ...values,
-      immediate: (key) => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      immediate: (key: string) => window.matchMedia('(prefers-reduced-motion: reduce)').matches
     }, config);
   }
 

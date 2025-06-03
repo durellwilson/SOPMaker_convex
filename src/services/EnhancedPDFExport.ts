@@ -138,7 +138,7 @@ export class EnhancedPDFExport {
       });
       
       // Configure PDF options with better quality and formatting
-      const pdfOptions: Html2PdfOptions = {
+      const pdfOptions = {
         margin: [20, 20] as [number, number],
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.99 },

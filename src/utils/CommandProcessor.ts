@@ -163,6 +163,13 @@ export class CommandProcessor {
   }
   
   /**
+   * Get suggestions for misheard commands
+   */
+  getSuggestions(command: string): string[] {
+    return getSuggestions(command);
+  }
+  
+  /**
    * Accept suggestion - process the suggested command
    */
   acceptSuggestion(): boolean {

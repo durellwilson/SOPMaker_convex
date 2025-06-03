@@ -22,7 +22,7 @@ const useVoiceRecognition = (options: VoiceRecognitionOptions = {}) => {
       return null;
     }
 
-    const recognition = new webkitSpeechRecognition();
+    const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = options.continuous ?? true;
     recognition.interimResults = options.interimResults ?? true;
     recognition.lang = options.lang ?? 'en-US';

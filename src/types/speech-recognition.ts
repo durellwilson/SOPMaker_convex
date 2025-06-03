@@ -66,8 +66,8 @@ export interface SpeechGrammarList {
 
 declare global {
   interface Window {
-    webkitSpeechRecognition: typeof webkitSpeechRecognition;
-    webkitSpeechGrammarList: typeof webkitSpeechGrammarList;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechGrammarList: new () => SpeechGrammarList;
     SpeechRecognition: new () => SpeechRecognition;
     SpeechGrammarList: new () => SpeechGrammarList;
   }

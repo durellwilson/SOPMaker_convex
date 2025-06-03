@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { SpeechRecognition, RecognitionStatus } from '../../types/material';
 import { audioFeedback } from '../../utils/audioFeedback';
@@ -184,7 +184,7 @@ export function EnhancedVoiceCommandListener({
           const confidence = event.results[0][0].confidence;
           setConfidenceLevel(confidence);
         
-        if (!event.results[0].isFinal) {
+          if (!event.results[0].isFinal) {
             // Interim results - just show what we're hearing
             setRecognitionStatus('listening'); 
           } else {
@@ -208,56 +208,61 @@ export function EnhancedVoiceCommandListener({
               
               if (success) {
                 setRecognitionStatus('success');
-            audioFeedback.commandSuccess();
-            
-            // Haptic feedback for success
-            if (navigator.vibrate) {
-              navigator.vibrate([50, 50, 100]); // Success pattern
-            }
-          } else {
+                audioFeedback.commandSuccess();
+                
+                // Haptic feedback for success
+                if (navigator.vibrate) {
+                  navigator.vibrate([50, 50, 100]); // Success pattern
+                }
+              } else {
+                setRecognitionStatus('error');
+                audioFeedback.commandError();
+                
+                // Haptic feedback for error
+                if (navigator.vibrate) {
+                  navigator.vibrate([100, 50, 100]); // Error pattern
+                }
+                
+                // Get suggestions for misheard commands
+                const suggestions = commandProcessorRef.current?.getSuggestions(transcript) || [];
+                if (suggestions.length > 0) {
+                  setSuggestedCommand(suggestions[0]);
+                  toast.info(`Did you mean: "${suggestions[0]}"?`, {
+                    duration: 3000,
+                    action: {
+                      label: 'Try This',
+                      onClick: () => onCommandReceived(suggestions[0])
+                    }
+                  });
+                } else if (commandProcessorRef.current && 
+                    commandProcessorRef.current.getCommandExamples().length > 0) {
+                  const examples = commandProcessorRef.current.getCommandExamples();
+                  const randomExample = examples[Math.floor(Math.random() * examples.length)];
+                  setSuggestedCommand(randomExample.example);
+                  
+                  setTimeout(() => setSuggestedCommand(null), 6000); // Clear after 6 seconds
+                }
+              }
+            } catch (error) {
+              console.error('Error processing voice command:', error);
               setRecognitionStatus('error');
               audioFeedback.commandError();
-              
-              // Haptic feedback for error
-              if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]); // Error pattern
-              }
-              
-              // Get suggestions for misheard commands
-              const suggestions = commandProcessorRef.current?.getSuggestions(transcript) || [];
-              if (suggestions.length > 0) {
-                setSuggestedCommand(suggestions[0]);
-                toast.info(`Did you mean: "${suggestions[0]}"?`, {
-                  duration: 3000,
-                  action: {
-                    label: 'Try This',
-                    onClick: () => onCommandReceived(suggestions[0])
-                  }
-                });
-              } else if (commandProcessorRef.current && 
-                  commandProcessorRef.current.getCommandExamples().length > 0) {
-                const examples = commandProcessorRef.current.getCommandExamples();
-                const randomExample = examples[Math.floor(Math.random() * examples.length)];
-                setSuggestedCommand(randomExample.example);
-                
-                setTimeout(() => setSuggestedCommand(null), 6000); // Clear after 6 seconds
-              }
+              toast.error('Error processing voice command');
             }
-          } catch (error) {
-            console.error('Error processing voice command:', error);
-            setRecognitionStatus('error');
-            audioFeedback.commandError();
-            toast.error('Error processing voice command');
+            
+            // Reset status after showing result
+            setTimeout(() => {
+              if (isListening) {
+                setRecognitionStatus('listening');
+              } else {
+                setRecognitionStatus('idle');
+              }
+            }, 1500);
           }
-          
-          // Reset status after showing result
-          setTimeout(() => {
-            if (isListening) {
-              setRecognitionStatus('listening');
-            } else {
-              setRecognitionStatus('idle');
-            }
-          }, 1500);
+        } catch (error) {
+          console.error('Error processing speech recognition result:', error);
+          setRecognitionStatus('error');
+          audioFeedback.commandError();
         }
       };
       
@@ -373,12 +378,47 @@ export function EnhancedVoiceCommandListener({
     }
   };
 
+  // Animation properties for enhanced visual feedback
+  const [springProps, setSpringProps] = useState(() => AnimationService.createSpring({ 
+    scale: 1,
+    opacity: 0.8,
+    x: 0,
+    y: 0
+  }));
+
+  // Add gesture handlers
+  const handleGestureStart = useCallback((event: React.PointerEvent<Element>) => {
+    AnimationService.handleGestureTransform(event, springProps.x, springProps.x.get());
+  }, [springProps.x]);
+
+  const handleGestureEnd = useCallback(() => {
+    springProps.x.start(0);
+  }, [springProps.x]);
+
+  // Update animation based on recognition status
+  useEffect(() => {
+    if (recognitionStatus === 'listening' || recognitionStatus === 'processing' || recognitionStatus === 'success') {
+      const newSpring = AnimationService.createVoiceInteractionAnimation(recognitionStatus);
+      // Preserve x and y values from current state
+      setSpringProps(prev => ({
+        ...prev,
+        scale: newSpring.scale,
+        opacity: newSpring.opacity
+      }));
+    }
+  }, [recognitionStatus]);
+
+  // Add ARIA labels for accessibility
+  const ariaLabel = useMemo(() => {
+    return `Voice command ${recognitionStatus} - ${visualFeedback}`;
+  }, [recognitionStatus, visualFeedback]);
+  
   return (
     <div>
       {isListening && (
         <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-md text-sm border border-gray-200 dark:border-gray-600 transition-all duration-300" 
              role="region" 
-             aria-label="Voice command interface"
+             aria-label={ariaLabel}
              aria-live="polite">
           <div className="flex items-center gap-3 mb-2">
             <div className="relative w-6 h-6">
@@ -469,30 +509,3 @@ export function EnhancedVoiceCommandListener({
     </div>
   );
 }
-
-  const [springProps, setSpringProps] = useState(() => AnimationService.createSpring({ 
-    scale: 1,
-    opacity: 0.8,
-    x: 0,
-    y: 0
-  }));
-
-  // Add gesture handlers
-  const handleGestureStart = useCallback((event: GestureResponderEvent) => {
-    AnimationService.handleGestureTransform(event, springProps.x, springProps.x.get());
-  }, [springProps.x]);
-
-  const handleGestureEnd = useCallback(() => {
-    springProps.x.start(0);
-  }, [springProps.x]);
-
-  // Update animation based on recognition status
-  useEffect(() => {
-    const newSpring = AnimationService.createVoiceInteractionAnimation(recognitionStatus);
-    setSpringProps(newSpring);
-  }, [recognitionStatus]);
-
-  // Add ARIA labels for accessibility
-  const ariaLabel = useMemo(() => {
-    return `Voice command ${recognitionStatus} - ${visualFeedback}`;
-  }, [recognitionStatus, visualFeedback]);

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
+import useVoiceRecognition from '../hooks/useVoiceRecognition';
 import { normalizeCommand } from '../utils/commandUtils';
 
 type ListenerProps = {

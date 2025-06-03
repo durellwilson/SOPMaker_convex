@@ -26,7 +26,7 @@ export const shareSOP = mutation({
         .withIndex("by_sop", (q) => 
           q.eq("sopId", args.sopId)
         )
-        .filter(q => q.eq("userId", currentUserId))
+        .filter(q => q.eq(q.field("userId"), currentUserId))
         .unique();
 
       if (!userShare || userShare.permission !== "admin") {
@@ -40,7 +40,7 @@ export const shareSOP = mutation({
       .withIndex("by_sop", (q) => 
         q.eq("sopId", args.sopId)
       )
-      .filter(q => q.eq("userId", args.userId))
+      .filter(q => q.eq(q.field("userId"), args.userId))
       .unique();
 
     if (existingShare) {
@@ -87,7 +87,7 @@ export const removeSopShare = mutation({
         .withIndex("by_sop", (q) => 
           q.eq("sopId", args.sopId)
         )
-        .filter(q => q.eq("userId", currentUserId))
+        .filter(q => q.eq(q.field("userId"), currentUserId))
         .unique();
 
       if (!userShare || userShare.permission !== "admin") {
@@ -101,7 +101,7 @@ export const removeSopShare = mutation({
       .withIndex("by_sop", (q) => 
         q.eq("sopId", args.sopId)
       )
-      .filter(q => q.eq("userId", args.userId))
+      .filter(q => q.eq(q.field("userId"), args.userId))
       .unique();
 
     if (share) {
@@ -133,7 +133,7 @@ export const setSOPVisibility = mutation({
         .withIndex("by_sop", (q) => 
           q.eq("sopId", args.sopId)
         )
-        .filter(q => q.eq("userId", currentUserId))
+        .filter(q => q.eq(q.field("userId"), currentUserId))
         .unique();
 
       if (!userShare || userShare.permission !== "admin") {
@@ -244,7 +244,7 @@ export const getSOPCollaborators = query({
         .withIndex("by_sop", (q) => 
           q.eq("sopId", args.sopId)
         )
-        .filter(q => q.eq("userId", currentUserId))
+        .filter(q => q.eq(q.field("userId"), currentUserId))
         .unique()) !== null;
 
     if (!hasAccess) {
@@ -304,7 +304,7 @@ export const addSOPComment = mutation({
         .withIndex("by_sop", (q) => 
           q.eq("sopId", args.sopId)
         )
-        .filter(q => q.eq("userId", userId))
+        .filter(q => q.eq(q.field("userId"), userId))
         .unique()) !== null;
 
     if (!hasAccess) {
@@ -353,7 +353,7 @@ export const getSOPComments = query({
         .withIndex("by_sop", (q) => 
           q.eq("sopId", args.sopId)
         )
-        .filter(q => q.eq("userId", userId))
+        .filter(q => q.eq(q.field("userId"), userId))
         .unique()) !== null;
 
     if (!hasAccess) {

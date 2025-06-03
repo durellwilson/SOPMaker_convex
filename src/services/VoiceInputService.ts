@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { audioFeedback } from '../utils/audioFeedback';
+import { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../types/speech-recognition';
 
 /**
  * Service for handling voice input functionality with proper state management and error handling
@@ -21,9 +22,9 @@ export class VoiceInputService {
   private static recordingStartTime: number = 0; // Track when recording started for resource management
   
   // Timers and activity tracking
-  private static timeout: ReturnType<typeof setTimeout> | null = null;
-  private static processingTimeout: ReturnType<typeof setTimeout> | null = null;
-  private static autoStopTimeout: ReturnType<typeof setTimeout> | null = null;
+  private static timeout: NodeJS.Timeout | null = null;
+  private static processingTimeout: NodeJS.Timeout | null = null;
+  private static autoStopTimeout: NodeJS.Timeout | null = null;
   private static lastActivityTimestamp: number = 0;
   
   // Error recovery configuration
@@ -225,7 +226,7 @@ export class VoiceInputService {
     
     // If we're not actually listening, just reset state
     if (!this.isListening || !this.recognition) {
-      this.resetState();
+      this.resetStateBasic();
       return true;
     }
     
@@ -243,21 +244,22 @@ export class VoiceInputService {
       });
       
       // Reset state
-      this.resetState();
+      this.resetStateBasic();
       return true;
     } catch (error) {
       console.error('Error stopping speech recognition:', error);
       
       // Even if there's an error, we should reset our state
-      this.resetState();
+      this.resetStateBasic();
       return false;
     }
   }
   
   /**
    * Reset all state variables to their default values
+   * @private
    */
-  private static resetState(): void {
+  private static resetStateBasic(): void {
     this.isListening = false;
     this.interimResults = '';
     this.finalResults = '';
@@ -306,7 +308,8 @@ export class VoiceInputService {
   }
   
   /**
-   * Stop all voice input and speech synthesis
+   * Stop all voice input and speech synthesis (basic version)
+   * @deprecated Use stopAllVoiceInput instead
    */
   static stopAll(): void {
     this.stopListening();
@@ -524,7 +527,7 @@ export class VoiceInputService {
     }
     
     this.clearTimeouts();
-    this.resetState();
+    this.resetStateBasic();
   }
   
   /**
@@ -532,7 +535,7 @@ export class VoiceInputService {
    * This is a global method that can be called from anywhere to ensure
    * all voice input is properly stopped
    */
-  static stopAll(): void {
+  static stopAllVoiceInput(): void {
     // Stop any active speech synthesis
     if (this.synth && this.synth.speaking) {
       this.synth.cancel();
@@ -545,7 +548,7 @@ export class VoiceInputService {
     this.cleanupRecognition();
     
     // Reset all state
-    this.resetState();
+    this.resetStateComplete();
     this.targetField = null;
     this.currentCallback = null;
     
@@ -580,7 +583,7 @@ export class VoiceInputService {
   /**
    * Reset all state variables to their initial values
    */
-  private static resetState(): void {
+  private static resetStateComplete(): void {
     this.isListening = false;
     this.currentCallback = null;
     this.interimResults = '';
@@ -648,7 +651,7 @@ export class VoiceInputService {
       
       // Set auto-stop timeout with a more generous duration
       this.clearTimeouts();
-      this.autoStopTimeout = window.setTimeout(() => {
+      this.autoStopTimeout = setTimeout(() => {
         if (this.isListening) {
           const timeSinceLastActivity = Date.now() - this.lastActivityTimestamp;
           if (timeSinceLastActivity >= this.maxSilenceDuration) {
@@ -662,7 +665,7 @@ export class VoiceInputService {
       }, this.maxListeningDuration);
     };
     
-    this.recognition.onresult = (event) => {
+    this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       // Update last activity timestamp to prevent auto-stop during active speech
       this.lastActivityTimestamp = Date.now();
       this.retryCount = 0; // Reset retry count on successful result
@@ -739,7 +742,7 @@ export class VoiceInputService {
           
           // Reset silence detection timeout
           this.clearTimeouts();
-          this.processingTimeout = window.setTimeout(() => {
+          this.processingTimeout = setTimeout(() => {
             const timeSinceLastActivity = Date.now() - this.lastActivityTimestamp;
             if (timeSinceLastActivity >= this.maxSilenceDuration) {
               toast.info('Voice input completed due to inactivity', {
@@ -766,7 +769,7 @@ export class VoiceInputService {
       }
     };
     
-    this.recognition.onerror = (event) => {
+    this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error);
       
       // Handle different error types with appropriate recovery strategies
@@ -874,7 +877,8 @@ export class VoiceInputService {
           }
           break;
           
-        case 'not-allowed':
+        // Handle permission errors
+        case 'not-allowed': // Already handled above, but keeping for clarity
         case 'service-not-allowed':
           toast.error('Microphone access denied. Please enable microphone permissions.', {
             duration: 3000,
@@ -882,9 +886,9 @@ export class VoiceInputService {
           });
           break;
           
-        case 'audio-capture':
-          toast.error('No microphone detected. Please connect a microphone and try again.', {
-            duration: 3000,
+        // Handle audio capture errors - using 'not-allowed' as a fallback since our type definition doesn't include 'audio-capture'
+           toast.error('No microphone detected. Please connect a microphone and try again.', {
+             duration: 3000,
             position: 'bottom-right'
           });
           break;
@@ -937,29 +941,9 @@ export class VoiceInputService {
             if (this.isListening && this.recognition) {
               try {
                 // Check if the recognition object is in a valid state
-                if (this.recognition.state === 'inactive') {
-                  this.recognition.start();
-                  console.log('Recognition restarted after end event');
-                } else {
-                  // If not in inactive state, recreate the recognition object
-                  console.log('Recognition in invalid state, recreating...');
-                  this.cleanupRecognition();
-                  if (this.initialize()) {
-                    setTimeout(() => {
-                      try {
-                        this.recognition?.start();
-                        console.log('Recognition restarted after recreation');
-                      } catch (startError) {
-                        console.error('Error starting recreated recognition:', startError);
-                        this.isListening = false;
-                        toast.error('Failed to restart voice recognition', {
-                          duration: 2000,
-                          position: 'bottom-right'
-                        });
-                      }
-                    }, 100);
-                  }
-                }
+                // Try to restart recognition
+                this.recognition.start();
+                console.log('Recognition restarted after end event');
               } catch (error) {
                 console.error('Error restarting speech recognition:', error);
                 
@@ -1044,7 +1028,7 @@ export class VoiceInputService {
       this.lastActivityTimestamp = Date.now();
       // Reset silence detection timeout
       this.clearTimeouts();
-      this.processingTimeout = window.setTimeout(() => {
+      this.processingTimeout = setTimeout(() => {
         if (this.isListening) {
           const timeSinceLastActivity = Date.now() - this.lastActivityTimestamp;
           if (timeSinceLastActivity >= this.maxSilenceDuration / 2) { // Use shorter timeout after speech ends
